@@ -1594,14 +1594,17 @@ Details:
 
 **Main Success Scenario:**
 1. The instructor selects one or more eligible students from UC-STU-view-submissions: View students who have not submitted this week and indicates to send a reminder.
-2. The system displays the selected students, the item due, the due time, and the reminder message, and asks the instructor to confirm sending.
-3. The instructor confirms sending the reminders.
+2. The system displays the selected students, the item due, the due time, and the reminder message, allows the instructor to deselect any selected student, and asks the instructor to confirm sending.
+3. The instructor reviews the recipients, optionally deselects one or more students, and confirms sending the reminders.
 4. Immediately before each delivery attempt, the system re-evaluates that student's eligibility according to BR-submission-reminder-eligibility.
 5. The system sends the reminder through the Gmail SMTP integration to each selected student who remains eligible.
 6. The system informs the instructor of the delivery attempts and any students skipped because their eligibility changed.
 7. Use case ends.
 
 **Extensions:**
+- **3a. The instructor deselects every student:**
+  - 3a1. The system sends no reminders and informs the instructor that no recipients remain selected.
+  - 3a2. Use case ends.
 - **4a. A selected student has submitted, is no longer assigned to a team, is outside an active week, or can no longer submit:**
   - 4a1. The system skips that student and continues with the next selected student (BR-submission-reminder-eligibility).
   - 4a2. The system continues at step 4 of the normal flow.
@@ -1621,6 +1624,7 @@ Details:
 
 **Associated Information:**
 - Reminder content identifies the item due, its target week, and due time. It contains no information about any other student's submission status.
+- Recipient selection: Before confirming, the instructor may deselect any student proposed by UC-STU-view-submissions. The system sends only to recipients still selected after that review and still eligible under BR-submission-reminder-eligibility.
 - Frequency and recipient eligibility are governed by BR-submission-reminder-eligibility. The scheduled reminder specified by FR-NOT-weekly-reminder uses that same rule.
 - This use case transmits student educational-record information. Access and transmission shall comply with CO-ferpa.
 
