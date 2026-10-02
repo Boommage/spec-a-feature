@@ -1522,6 +1522,116 @@ Details:
 **Assumptions:**
 **Open Issues:**
 
+### **UC-STU-view-submissions: The instructor views students who have not submitted this week**
+
+**UC ID and Name:** UC-STU-view-submissions: View students who have not submitted this week
+**Created By:**
+**Date Created:**
+**Primary Actor:** instructor
+**Secondary Actors:**
+**Trigger:** The instructor indicates to view the students in one of her course sections who have not submitted an item due this week.
+**Description:** The instructor wants to see the current submission status of students in her course section, so that she can identify students who have not submitted an item due this week and, when appropriate, remind them.
+
+**Preconditions:**
+- PRE-1. The instructor is logged into the system.
+- PRE-2. The instructor is assigned to the course section (BR-section-scoped-access).
+
+**Postconditions:**
+- POST-1. The instructor is shown the current submission status for the selected course section's items due this week, limited to students in that course section.
+
+**Main Success Scenario:**
+1. The instructor indicates to view students who have not submitted this week.
+2. The system asks the instructor to select one of her course sections and the item due this week.
+3. The instructor selects the course section and item.
+4. The system determines the current submission status and reminder eligibility of each student in the selected course section according to BR-section-scoped-access and BR-submission-reminder-eligibility.
+5. The system displays the students who have not submitted, with their reminder eligibility, according to the “Submission-status display” defined in the Associated Information of this use case.
+6. The instructor either selects one or more eligible students to UC-STU-remind-students: Remind students who have not submitted, or ends the use case.
+7. Use case ends.
+
+**Extensions:**
+- **4a. The instructor selects a course section to which she is not assigned:**
+  - 4a1. The system denies access to the course section and displays an appropriate error message (BR-section-scoped-access, BR-role-based-access).
+  - 4a2. Use case ends.
+- **5a. Every student has submitted the selected item:**
+  - 5a1. The system informs the instructor that no student in the selected course section has an outstanding submission for that item.
+  - 5a2. Use case ends.
+- **5b. An unsubmitted student is not eligible for a reminder:**
+  - 5b1. The system displays the student as unsubmitted with the applicable non-eligible status and does not offer her for selection as a reminder recipient (BR-submission-reminder-eligibility).
+  - 5b2. The system continues at step 6 of the normal flow.
+
+**Priority:** High
+**Frequency of Use:** Approximately 2 users, a few usages per week during active weeks.
+**Business Rules:** BR-section-scoped-access, BR-role-based-access, BR-team-assignment-required, BR-active-weeks, BR-evaluation-submission-window, BR-submission-reminder-eligibility
+
+**Associated Information:**
+- Submission-status display: The list is restricted to the instructor's selected course section and displays student name, team, item due, target week, due time, current submission status, and reminder status. It includes unsubmitted students even when they cannot be reminded, so the instructor can distinguish an outstanding submission from a deliverable reminder. Submitted students are not displayed in the unsubmitted list.
+- The system determines the displayed reminder status under BR-submission-reminder-eligibility; a non-eligible student is not selectable as a recipient.
+- This use case displays student educational-record information. Access and transmission shall comply with CO-ferpa.
+- If an unanticipated or systemic failure prevents the status from being retrieved, the system displays an error and does not display a partial list as complete; no reminder is sent by this use case.
+
+**Related Use Cases:** UC-STU-remind-students: Remind students who have not submitted; UC-WAR-team-war-report: Generate a WAR report of a team; UC-EVA-section-evaluation-report: Generate a peer evaluation report of the entire course section.
+**Assumptions:**
+**Open Issues:**
+
+### **UC-STU-remind-students: The instructor reminds students who have not submitted**
+
+**UC ID and Name:** UC-STU-remind-students: Remind students who have not submitted
+**Created By:**
+**Date Created:**
+**Primary Actor:** instructor
+**Secondary Actors:** student, Gmail SMTP integration
+**Trigger:** The instructor selects one or more eligible, unsubmitted students and indicates to send a reminder.
+**Description:** The instructor wants to remind only students who have not submitted an item due this week, so that students who still can act receive a timely prompt without notifying students who are already done.
+
+**Preconditions:**
+- PRE-1. The instructor is logged into the system.
+- PRE-2. The instructor obtained the proposed recipients through UC-STU-view-submissions: View students who have not submitted this week.
+- PRE-3. At least one proposed recipient is in a course section to which the instructor is assigned (BR-section-scoped-access).
+
+**Postconditions:**
+- POST-1. The system has attempted delivery of a reminder to every selected student who remains eligible immediately before her delivery attempt.
+- POST-2. No reminder has been attempted for a selected student who is no longer eligible.
+
+**Main Success Scenario:**
+1. The instructor selects one or more eligible students from UC-STU-view-submissions: View students who have not submitted this week and indicates to send a reminder.
+2. The system displays the selected students, the item due, the due time, and the reminder message, allows the instructor to deselect any selected student, and asks the instructor to confirm sending.
+3. The instructor reviews the recipients, optionally deselects one or more students, and confirms sending the reminders.
+4. Immediately before each delivery attempt, the system re-evaluates that student's eligibility according to BR-submission-reminder-eligibility.
+5. The system sends the reminder through the Gmail SMTP integration to each selected student who remains eligible.
+6. The system informs the instructor of the delivery attempts and any students skipped because their eligibility changed.
+7. Use case ends.
+
+**Extensions:**
+- **3a. The instructor deselects every student:**
+  - 3a1. The system sends no reminders and informs the instructor that no recipients remain selected.
+  - 3a2. Use case ends.
+- **4a. A selected student has submitted, is no longer assigned to a team, is outside an active week, or can no longer submit:**
+  - 4a1. The system skips that student and continues with the next selected student (BR-submission-reminder-eligibility).
+  - 4a2. The system continues at step 4 of the normal flow.
+- **4b. No selected student remains eligible:**
+  - 4b1. The system sends no reminders and informs the instructor that all selected students were skipped because their eligibility changed.
+  - 4b2. Use case ends.
+- **5a. The mail server rejects one student's address:**
+  - 5a1. The system logs the delivery failure, continues with the remaining eligible students, and reports the failed address to the instructor.
+  - 5a2. The system continues at step 5 of the normal flow.
+- **5b. An unanticipated or systemic delivery failure occurs before all selected recipients are processed:**
+  - 5b1. The system reports which deliveries were attempted, skipped, or not attempted, and logs the failure. It does not retry or roll back deliveries that were already attempted.
+  - 5b2. Use case ends.
+
+**Priority:** High
+**Frequency of Use:** Approximately 2 users, a few usages per week during active weeks.
+**Business Rules:** BR-section-scoped-access, BR-role-based-access, BR-team-assignment-required, BR-active-weeks, BR-evaluation-submission-window, BR-submission-reminder-eligibility
+
+**Associated Information:**
+- Reminder content identifies the item due, its target week, and due time. It contains no information about any other student's submission status.
+- Recipient selection: Before confirming, the instructor may deselect any student proposed by UC-STU-view-submissions. The system sends only to recipients still selected after that review and still eligible under BR-submission-reminder-eligibility.
+- Frequency and recipient eligibility are governed by BR-submission-reminder-eligibility. The scheduled reminder specified by FR-NOT-weekly-reminder uses that same rule.
+- This use case transmits student educational-record information. Access and transmission shall comply with CO-ferpa.
+
+**Related Use Cases:** UC-STU-view-submissions: View students who have not submitted this week.
+**Assumptions:**
+**Open Issues:**
+
 ## **Instructor**
 
 ### **UC-INS-invite-instructors: The course admin invites instructors to register an account**

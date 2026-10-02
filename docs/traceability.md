@@ -115,6 +115,8 @@ This map is the **single anchor for the `BO → feature` edge** and the head of 
 | UC-STU-delete-student | The course admin deletes a student | ✅ Built | ✅ Verified | — | — | `Students.vue` → `apis/student` `deleteStudent` | `StudentController.deleteStudent → StudentService.deleteStudent` / `Student` | `StudentServiceTest.testDeleteStudent`; `StudentIntegrationTest.testAdminDeletesStudent`, `testStudentDeletesAnotherStudent` |
 | UC-STU-deactivate-student | The course admin/instructor deactivates a student | 🟡 In progress | 🔎 None | — | — | — (no dedicated control; via student edit) → `apis/student` `updateStudent` | `StudentController.updateStudent → StudentService.updateStudent` (`enabled` flag; no dedicated deactivate endpoint) / `Student` | — (no targeted deactivate test; only the generic `updateStudent` path) |
 | UC-STU-reactivate-student | The course admin/instructor reactivates a student | 🟡 In progress | 🔎 None | — | — | — (no dedicated control; via student edit) → `apis/student` `updateStudent` | `StudentController.updateStudent → StudentService.updateStudent` (`enabled` flag; no dedicated reactivate endpoint) / `Student` | — (no targeted reactivate test; only the generic `updateStudent` path) |
+| UC-STU-view-submissions | The instructor views students who have not submitted this week | ❌ Not started | 🔎 None | FR-NOT-weekly-reminder | — | — | — | — |
+| UC-STU-remind-students | The instructor reminds students who have not submitted | ❌ Not started | 🔎 None | FR-NOT-weekly-reminder | — | — | — | — |
 | UC-INS-invite-instructors | The course admin invites instructors to register an account | ✅ Built | 🔎 None | — | — | `InviteUsersForm.vue` → `apis/section` `inviteOrAddInstructors` | `SectionController.inviteOrAddInstructors → UserInvitationService.sendEmailInvitations` / `UserInvitation` | — (no test exercises the `invite-or-add` path) |
 | UC-INS-assign-instructors | The course admin assigns instructors to teams | ✅ Built | ✅ Verified | — | — | `Sections.vue` → `apis/team` `assignInstructorToTeam` | `TeamController.assignInstructorToTeam → TeamService.assignInstructorToTeam` (+ `InstructorRepository`) / `Team` | `TeamServiceTest.testAssignInstructorToTeam`; `TeamIntegrationTest.assignInstructorToTeam`, `assignInstructorToTeamNotSameSection` |
 | UC-INS-remove-instructor | The course admin removes an instructor from a team | ✅ Built | ✅ Verified | — | — | `Sections.vue` → `apis/section` `removeInstructorFromSection` | `SectionController.removeInstructor → SectionService.removeInstructor` / `Section` | `SectionServiceTest.testRemoveInstructorSuccess`, `testRemoveInstructorFailsWhenLastInstructor`; `SectionIntegrationTest.adminBingyangRemoveInstructor`, `adminTimRemoveInstructor` |
@@ -206,7 +208,7 @@ Two conventions keep this from duplicating the other matrices: a cross-cutting F
 | FR-GLO-term-suggestion | — | — (no term-suggestion logic) | — | ❌ Not started | — |
 | FR-HIS-authorship-metadata | — | `JpaAuditingConfig` + `@CreatedBy`/`@LastModifiedBy` on RAM entities (`RequirementArtifact`, `RequirementDocument`, `DocumentSection`, `ArtifactLink`, `Comment`, …) | — (no targeted test; known gaps tracked in OI-19) | 🟡 In progress | 🔎 None |
 | FR-NOT-suppress-routine | — | Holds by construction (no routine-edit notification code; `CI-no-routine-email`) | — (no negative test) | ✅ Built | 🔎 None |
-| FR-NOT-weekly-reminder | — | `WeeklyReminderScheduler` (`system/`) → `EmailService.sendReminderEmail`, `SectionService` | `WeeklyReminderSchedulerTest` (due day, nothing due, disabled, one student's send failing, one course section failing) | ✅ Built | ✅ Verified |
+| FR-NOT-weekly-reminder | — | `WeeklyReminderScheduler` (`system/`) → `EmailService.sendReminderEmail`, `SectionService` (currently sends every enrolled student and does not recheck submission eligibility) | `WeeklyReminderSchedulerTest` (due day, nothing due, disabled, one student's send failing, one course section failing; no eligibility-recheck coverage) | 🟡 In progress | 🟡 Partial |
 | FR-SEC-authentication | — | `SecurityConfiguration` + JWT (`AuthService`, `CustomBearerTokenAuthenticationEntryPoint`) | integration `isUnauthorized` cases → see NFR matrix `QS-2` | ✅ Built | ✅ Verified |
 | FR-SEC-authorization | — | `*AuthorizationManager` family (ids read from `RequestAuthorizationContext.getVariables()` via `PathVariables`) + `*SecurityService` (RBAC + team scoping, fail-closed) | `*_NotSameTeam` / `*NotInSameCourse` / `*NotSameSection`; `AuthorizationRuleIntegrationTest`, `TeamSecurityServiceTest`, `TeamMembershipAuthorizationManagerTest` (unresolvable id denied, not 500), `ActivitySecurityServiceTest` (a student reaches only her own team's weekly activity reports) → see NFR matrix `QS-1` | ✅ Built | ✅ Verified |
 | FR-SEC-deny-unauthorized | — | `CustomBearerTokenAccessDeniedHandler` + `CustomBasicAuthenticationEntryPoint` + `SecurityConfiguration` | integration `isForbidden` / `isUnauthorized` cases; `AuthorizationRuleIntegrationTest` (denial returns the `Result` envelope, not a container error) → see NFR matrix `QS-1`/`QS-2` | ✅ Built | ✅ Verified |
@@ -324,7 +326,7 @@ A business rule (`BR-*`, owned by [business-rules.md](requirements/business-rule
 | Business rule | Cited by use cases | SRS | QS |
 |---|---|---|---|
 | `BR-account-self-setup` | `UC-ACC-setup-instructor-account`, `UC-ACC-setup-student-account` | — | — |
-| `BR-active-weeks` | `UC-EVA-submit-evaluation`, `UC-SEC-setup-active-weeks` | — | — |
+| `BR-active-weeks` | `UC-EVA-submit-evaluation`, `UC-SEC-setup-active-weeks`, `UC-STU-remind-students`, `UC-STU-view-submissions` | — | — |
 | `BR-artifact-key-unique` | `UC-ART-create-artifact` | `DI-artifact-key-assignment`, (prose) | — |
 | `BR-assistant-enablement` | `UC-AI-consult-project-assistant`, `UC-AI-draft-skeleton`, `UC-AI-elicit-requirements`, `UC-AI-practice-interview`, `UC-CFG-toggle-assistants` | — | — |
 | `BR-assistant-socratic` | `UC-AI-consult-project-assistant`, `UC-AI-critique`, `UC-AI-draft-skeleton`, `UC-AI-elicit-requirements`, `UC-AI-practice-interview`, `UC-AI-review-proposal`, `UC-AI-structure-notes`, `UC-AI-tutor`, `UC-AI-whole-project-review` | — | — |
@@ -336,7 +338,7 @@ A business rule (`BR-*`, owned by [business-rules.md](requirements/business-rule
 | `BR-edit-lock-required` | `UC-COL-collaborative-edit`, `UC-DOC-edit-document`, `UC-DOC-edit-use-case` | `DI-concurrency-control`, (prose) | — |
 | `BR-evaluation-editable-until-close` | `UC-EVA-submit-evaluation` | — | — |
 | `BR-evaluation-private-comment` | `UC-EVA-section-evaluation-report`, `UC-EVA-student-evaluation-report`, `UC-EVA-submit-evaluation`, `UC-EVA-view-own-evaluation` | `FR-SEC-authorization` | — |
-| `BR-evaluation-submission-window` | `UC-EVA-submit-evaluation` | — | — |
+| `BR-evaluation-submission-window` | `UC-EVA-submit-evaluation`, `UC-STU-remind-students`, `UC-STU-view-submissions` | — | — |
 | `BR-evaluation-visibility` | `UC-EVA-view-own-evaluation` | `FR-SEC-authorization` | — |
 | `BR-explicit-acceptance` | `UC-AI-critique`, `UC-AI-draft-skeleton`, `UC-AI-review-proposal`, `UC-AI-structure-notes`, `UC-AI-whole-project-review` | — | — |
 | `BR-glossary-term-unique` | `UC-GLO-create-term`, `UC-GLO-rename-term` | — | — |
@@ -346,17 +348,18 @@ A business rule (`BR-*`, owned by [business-rules.md](requirements/business-rule
 | `BR-lock-expiry` | `UC-DOC-edit-document`, `UC-DOC-edit-use-case` | `DI-concurrency-control`, (prose) | — |
 | `BR-review-authority` | `UC-REV-review-documents` | (prose) | — |
 | `BR-review-lock` | `UC-REV-submit-for-review` | (prose) | — |
-| `BR-role-based-access` | _universal_ — 40 UCs (every authoring/CRUD use case) | `FR-SEC-authorization`, `SEC-authorization` | `QS-1` |
+| `BR-role-based-access` | _universal_ — 42 UCs (every authoring/CRUD use case) | `FR-SEC-authorization`, `SEC-authorization` | `QS-1` |
 | `BR-rubric-admin-only` | `UC-RUB-add-criterion`, `UC-RUB-create-criterion`, `UC-RUB-create-rubric`, `UC-RUB-delete-criterion`, `UC-RUB-delete-rubric`, `UC-RUB-edit-criterion`, `UC-RUB-edit-rubric`, `UC-RUB-remove-criterion` | — | — |
 | `BR-section-admin-only` | `UC-RUB-assign-rubric`, `UC-SEC-create-section`, `UC-SEC-edit-section`, `UC-SEC-setup-active-weeks` | — | — |
 | `BR-section-config-access` | `UC-CFG-configure-assistant-instructions`, `UC-CFG-configure-review-criteria`, `UC-CFG-configure-teaching-context`, `UC-CFG-toggle-assistants` | — | — |
-| `BR-section-scoped-access` | `UC-EVA-section-evaluation-report`, `UC-EVA-student-evaluation-report`, `UC-WAR-student-war-report`, `UC-WAR-team-war-report` | `FR-SEC-authorization`, `SEC-authorization` | `QS-1` |
+| `BR-section-scoped-access` | `UC-EVA-section-evaluation-report`, `UC-EVA-student-evaluation-report`, `UC-STU-remind-students`, `UC-STU-view-submissions`, `UC-WAR-student-war-report`, `UC-WAR-team-war-report` | `FR-SEC-authorization`, `SEC-authorization` | `QS-1` |
+| `BR-submission-reminder-eligibility` | `UC-STU-remind-students`, `UC-STU-view-submissions` | `FR-NOT-weekly-reminder` | — |
 | `BR-source-material-import` | `UC-AI-import-source-material` | — | — |
 | `BR-student-lifecycle` | `UC-STU-deactivate-student`, `UC-STU-delete-student`, `UC-STU-reactivate-student` | `FR-SEC-active-account` | — |
 | `BR-team-admin-only` | `UC-INS-assign-instructors`, `UC-INS-remove-instructor`, `UC-TEA-assign-students`, `UC-TEA-create-team`, `UC-TEA-delete-team`, `UC-TEA-edit-team`, `UC-TEA-remove-student` | — | — |
-| `BR-team-assignment-required` | `UC-EVA-submit-evaluation`, `UC-WAR-manage-activities` | — | — |
+| `BR-team-assignment-required` | `UC-EVA-submit-evaluation`, `UC-STU-remind-students`, `UC-STU-view-submissions`, `UC-WAR-manage-activities` | — | — |
 | `BR-team-scoped-access` | _universal_ — 30 UCs (every authoring/CRUD use case) | `DI-team-scoping`, `FR-SEC-authorization`, `SEC-authorization`, `SI-export-formats`, (prose) | `QS-1` |
 | `BR-team-single-instructor` | `UC-INS-assign-instructors`, `UC-INS-remove-instructor` | — | — |
 | `BR-use-case-name-unique` | `UC-DOC-create-use-case` | — | — |
 
-> **Readout.** All 35 rules have at least one enforcer, so the backward view confirms the forward coverage check from the other direction. Two rules are load-bearing (`BR-role-based-access` 40 UCs, `BR-team-scoped-access` 30 UCs), so touching either is a project-wide change, which is exactly what the index makes visible. `BR-team-scoped-access` grew from 26 to 30 citing use cases on 2026-09-07, when OI-50 widened it from requirement content to all team-owned student work and the weekly-activity-report and peer-evaluation use cases began citing it; `BR-section-scoped-access` is its instructor-side companion, added in the same change. The `(prose)` SRS entries are rules the SRS cites in narrative (for example the locking rules in the autosave/persistence discussion) rather than from a specific `FR-*`.
+> **Readout.** All 36 rules have at least one enforcer, so the backward view confirms the forward coverage check from the other direction. Two rules are load-bearing (`BR-role-based-access` 42 UCs, `BR-team-scoped-access` 30 UCs), so touching either is a project-wide change, which is exactly what the index makes visible. `BR-team-scoped-access` grew from 26 to 30 citing use cases on 2026-09-07, when OI-50 widened it from requirement content to all team-owned student work and the weekly-activity-report and peer-evaluation use cases began citing it; `BR-section-scoped-access` is its instructor-side companion, added in the same change. The `(prose)` SRS entries are rules the SRS cites in narrative (for example the locking rules in the autosave/persistence discussion) rather than from a specific `FR-*`.
